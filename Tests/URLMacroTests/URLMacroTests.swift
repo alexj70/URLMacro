@@ -9,40 +9,35 @@ import XCTest
 import URLMacroMacros
 
 let testMacros: [String: Macro.Type] = [
-    "stringify": StringifyMacro.self,
+    "URL": URLMacro.self,
 ]
 #endif
 
 final class URLMacroTests: XCTestCase {
-    func testMacro() throws {
-        #if canImport(URLMacroMacros)
-        assertMacroExpansion(
-            """
-            #stringify(a + b)
-            """,
-            expandedSource: """
-            (a + b, "a + b")
-            """,
-            macros: testMacros
-        )
-        #else
-        throw XCTSkip("macros are only supported when running tests for the host platform")
-        #endif
-    }
-
-    func testMacroWithStringLiteral() throws {
-        #if canImport(URLMacroMacros)
+    func testValidURL() {
         assertMacroExpansion(
             #"""
-            #stringify("Hello, \(name)")
+            #URL("https://www.avanderlee.com")
             """#,
             expandedSource: #"""
-            ("Hello, \(name)", #""Hello, \(name)""#)
+            URL(string: "https://www.avanderlee.com")!
             """#,
             macros: testMacros
         )
-        #else
-        throw XCTSkip("macros are only supported when running tests for the host platform")
-        #endif
+    }
+    
+    func testURLStringLiteralError() {
+        assertMacroExpansion(
+            #"""
+            #URL("https://www.avanderlee.com/\(Int.random())")
+            """#,
+            expandedSource: #"""
+
+            """#,
+            diagnostics: [
+                DiagnosticSpec(message: "#URL requires a static string literal", line: 1, column: 1)
+            ],
+            macros: testMacros
+        )
     }
 }
